@@ -54,9 +54,17 @@
           ['ASN', data.asn]
         ];
         const infoBox = document.getElementById('infoBox');
-        infoBox.innerHTML = fields.map(([k, v]) => 
-          `<span class="label">${k}:</span> <span class="value">${v}</span>`
-        ).join('');
+        infoBox.innerHTML = '';
+        fields.forEach(([k, v]) => {
+          const labelEl = document.createElement('span');
+          labelEl.className = 'label';
+          labelEl.textContent = `${k}:`;
+          const valueEl = document.createElement('span');
+          valueEl.className = 'value';
+          valueEl.textContent = v;
+          infoBox.appendChild(labelEl);
+          infoBox.appendChild(valueEl);
+        });
       })
       .catch(err => {
         document.getElementById('infoBox').textContent = 'Error loading data.';
