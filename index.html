@@ -1,6 +1,6 @@
-
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>What's My Address</title>
@@ -10,22 +10,27 @@
       padding: 2em;
       background: #f8f9fa;
     }
+
     h1 {
       color: #343a40;
     }
+
     #infoBox {
       background: #fff;
       padding: 1em;
       border-radius: 8px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
+
     .label {
       font-weight: bold;
     }
+
     .value {
       margin-bottom: 0.5em;
       display: block;
     }
+
     footer {
       margin-top: 2em;
       font-size: 0.9em;
@@ -33,35 +38,67 @@
     }
   </style>
 </head>
+
 <body>
   <h1>Your Public IP & Location Info</h1>
   <div id="infoBox">Loading...</div>
-  <footer>Powered by <a href="https://ipapi.co" target="_blank">ipapi.co</a></footer>
+  <footer>Powered by <a href="https://ipapi.co" target="_blank">ipapi.co</a> & browser GPS</footer>
   <script>
-    fetch('https://ipapi.co/json/')
-      .then(res => res.ok ? res.json() : Promise.reject(res))
-      .then(data => {
-        const fields = [
-          ['IP', data.ip],
-          ['City', data.city],
-          ['Region', data.region],
-          ['Country', data.country_name],
-          ['Postal', data.postal],
-          ['Latitude', data.latitude],
-          ['Longitude', data.longitude],
-          ['ISP', data.org],
-          ['Time Zone', data.timezone],
-          ['ASN', data.asn]
-        ];
-        const infoBox = document.getElementById('infoBox');
-        infoBox.innerHTML = fields.map(([k, v]) => 
-          `<span class="label">${k}:</span> <span class="value">${v}</span>`
-        ).join('');
-      })
-      .catch(err => {
-        document.getElementById('infoBox').textContent = 'Error loading data.';
-        console.error(err);
-      });
+    const infoBox = document.getElementById('infoBox');
+
+    function showFields(fields) {
+      infoBox.innerHTML = fields.map(([k, v]) =>
+        `<span class="label">${k}:</span> <span class="value">${v}</span>`
+      ).join('');
+    }
+
+    function getIPInfo() {
+      fetch('https://ipapi.co/json/')
+        .then(res => res.ok ? res.json() : Promise.reject(res))
+        .then(data => {
+          const fields = [
+            ['IP', data.ip],
+            ['City', data.city],
+            ['Region', data.region],
+            ['Country', data.country_name],
+            ['Postal', data.postal],
+            ['Latitude (IP)', data.latitude],
+            ['Longitude (IP)', data.longitude],
+            ['ISP', data.org],
+            ['Time Zone', data.timezone],
+            ['ASN', data.asn]
+          ];
+          showFields(fields);
+        })
+        .catch(err => {
+          infoBox.textContent = 'Error loading IP data.';
+          console.error(err);
+        });
+    }
+
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          const lat = pos.coords.latitude.toFixed(6);
+          const lon = pos.coords.longitude.toFixed(6);
+          const acc = pos.coords.accuracy;
+          const fields = [
+            ['Latitude (GPS)', lat],
+            ['Longitude (GPS)', lon],
+            ['Accuracy (m)', acc]
+          ];
+          showFields(fields);
+        },
+        err => {
+          console.warn('GPS failed or denied, falling back to IP:', err);
+          getIPInfo();
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      );
+    } else {
+      getIPInfo();
+    }
   </script>
 </body>
+
 </html>
